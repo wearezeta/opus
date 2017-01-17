@@ -937,6 +937,16 @@ void opus_decoder_destroy(OpusDecoder *st)
    opus_free(st);
 }
 
+int opus_decoder_info(OpusDecoder *st, silk_dec_info *info)
+{
+    if( st->prev_mode == MODE_CELT_ONLY ) {
+        return -1;
+    }
+    
+    void *silk_dec = (char*)st+st->silk_dec_offset;
+    
+    return silk_decoder_info(silk_dec, info);
+}
 
 int opus_packet_get_bandwidth(const unsigned char *data)
 {

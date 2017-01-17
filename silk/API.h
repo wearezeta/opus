@@ -33,6 +33,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "errors.h"
 #include "entenc.h"
 #include "entdec.h"
+#include "silk_dec_info.h"
 
 #ifdef __cplusplus
 extern "C"

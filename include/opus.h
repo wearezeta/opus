@@ -35,6 +35,7 @@
 
 #include "opus_types.h"
 #include "opus_defines.h"
+#include "silk_dec_info.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -77,6 +77,29 @@ opus_int silk_InitDecoder(                              /* O    Returns error co
     return ret;
 }
 
+/* Get info about last packet */
+opus_int silk_decoder_info(
+                           void                            *decState,
+                           silk_dec_info                   *info
+                           )
+{
+    silk_decoder *psDec = ( silk_decoder * )decState;
+    silk_decoder_state *channel_state = psDec->channel_state;
+    
+    if( channel_state->fs_kHz > 0){
+        info->pitch_lag_48kHz = ( channel_state->sPLC.pitchL_Q8 * 48 >> 8) / channel_state->fs_kHz;
+        info->LTP_gain_Q14 = 0;
+        for( int k = 0; k < 5; k++ ) {
+            info->LTP_gain_Q14 += channel_state->sPLC.LTPCoef_Q14[ k ];
+        }
+    } else {
+        info->pitch_lag_48kHz = 0;
+        info->LTP_gain_Q14 = 0;
+    }
+    
+    return 0;
+}
+
 /* Decode a frame */
 opus_int silk_Decode(                                   /* O    Returns error code                              */
     void*                           decState,           /* I/O  State                                           */
