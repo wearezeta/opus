@@ -494,6 +494,11 @@ OPUS_EXPORT OPUS_WARN_UNUSED_RESULT int opus_decode_float(
     int decode_fec
 ) OPUS_ARG_NONNULL(1) OPUS_ARG_NONNULL(4);
 
+int opus_decoder_info(
+    OpusDecoder *st,
+    silk_dec_info *info
+);
+    
 /** Perform a CTL function on an Opus decoder.
   *
   * Generally the request and subsequent arguments are generated
