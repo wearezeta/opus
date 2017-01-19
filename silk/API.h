@@ -116,6 +116,15 @@ opus_int silk_Decode(                                   /* O    Returns error co
     int                             arch                /* I    Run-time architecture                           */
 );
 
+/******************************/
+/* Get info about last packet */
+/******************************/
+opus_int silk_decoder_info(
+    void                            *decState,
+    silk_dec_info                   *info
+);
+    
+    
 #if 0
 /**************************************/
 /* Get table of contents for a packet */
