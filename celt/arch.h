@@ -101,6 +101,7 @@ static OPUS_INLINE void _celt_fatal(const char *str, const char *file, int line)
 
 typedef opus_int16 opus_val16;
 typedef opus_int32 opus_val32;
+typedef opus_int64 opus_val64;
 
 typedef opus_val32 celt_sig;
 typedef opus_val16 celt_norm;
@@ -158,6 +159,7 @@ static OPUS_INLINE opus_int16 SAT16(opus_int32 x) {
 
 typedef float opus_val16;
 typedef float opus_val32;
+typedef float opus_val64;
 
 typedef float celt_sig;
 typedef float celt_norm;
@@ -258,9 +260,9 @@ static OPUS_INLINE int celt_isnan(float x)
 
 #ifndef GLOBAL_STACK_SIZE
 #ifdef FIXED_POINT
-#define GLOBAL_STACK_SIZE 100000
+#define GLOBAL_STACK_SIZE 120000
 #else
-#define GLOBAL_STACK_SIZE 100000
+#define GLOBAL_STACK_SIZE 120000
 #endif
 #endif
 

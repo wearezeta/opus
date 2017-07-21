@@ -85,6 +85,9 @@ silk/x86/VQ_WMat_EC_sse.c
 
 SILK_SOURCES_ARM_NEON_INTR = \
 silk/arm/arm_silk_map.c \
+silk/arm/biquad_alt_neon_intr.c \
+silk/arm/LPC_inv_pred_gain_neon_intr.c \
+silk/arm/NSQ_del_dec_neon_intr.c \
 silk/arm/NSQ_neon.c
 
 SILK_SOURCES_FIXED = \
@@ -114,6 +117,9 @@ silk/fixed/schur_FIX.c
 
 SILK_SOURCES_FIXED_SSE4_1 = silk/fixed/x86/vector_ops_FIX_sse.c \
 silk/fixed/x86/burg_modified_FIX_sse.c
+
+SILK_SOURCES_FIXED_ARM_NEON_INTR = \
+silk/fixed/arm/warped_autocorrelation_FIX_neon_intr.c
 
 SILK_SOURCES_FLOAT = \
 silk/float/apply_sine_window_FLP.c \

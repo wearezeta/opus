@@ -935,6 +935,7 @@ static int ec_enc_shrink_assert(void)
     opus_encoder_ctl(enc, OPUS_SET_PACKET_LOSS_PERC(6));
     opus_encoder_ctl(enc, OPUS_SET_BITRATE(6000));
     data_len = opus_encode(enc, pcm1, 960, data, 2000);
+    assert(data_len > 0);
 
     opus_encoder_ctl(enc, OPUS_SET_SIGNAL(OPUS_SIGNAL_VOICE));
     opus_encoder_ctl(enc, OPUS_SET_PREDICTION_DISABLED(1));
@@ -942,11 +943,13 @@ static int ec_enc_shrink_assert(void)
     opus_encoder_ctl(enc, OPUS_SET_INBAND_FEC(1));
     opus_encoder_ctl(enc, OPUS_SET_BITRATE(15600));
     data_len = opus_encode(enc, pcm2, 2880, data, 122);
+    assert(data_len > 0);
 
     opus_encoder_ctl(enc, OPUS_SET_SIGNAL(OPUS_SIGNAL_MUSIC));
     opus_encoder_ctl(enc, OPUS_SET_BITRATE(27000));
     data_len = opus_encode(enc, pcm3, 2880, data, 122); /* assertion failure */
-    (void)data_len;
+    assert(data_len > 0);
+
     opus_encoder_destroy(enc);
     return 0;
 }
@@ -983,6 +986,42 @@ static int ec_enc_shrink_assert2(void)
     return 0;
 }
 
+static int silk_gain_assert(void)
+{
+    OpusEncoder *enc;
+    int err;
+    int data_len;
+    unsigned char data[1000];
+    static const short pcm1[160] = { 0 };
+    static const short pcm2[960] =
+    {
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        32767, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 32767
+    };
+
+    enc = opus_encoder_create(8000, 1, OPUS_APPLICATION_AUDIO, &err);
+    opus_encoder_ctl(enc, OPUS_SET_COMPLEXITY(3));
+    opus_encoder_ctl(enc, OPUS_SET_MAX_BANDWIDTH(OPUS_BANDWIDTH_NARROWBAND));
+    opus_encoder_ctl(enc, OPUS_SET_BITRATE(6000));
+    data_len = opus_encode(enc, pcm1, 160, data, 1000);
+    assert(data_len > 0);
+
+    opus_encoder_ctl(enc, OPUS_SET_VBR(0));
+    opus_encoder_ctl(enc, OPUS_SET_COMPLEXITY(0));
+    opus_encoder_ctl(enc, OPUS_SET_MAX_BANDWIDTH(OPUS_BANDWIDTH_MEDIUMBAND));
+    opus_encoder_ctl(enc, OPUS_SET_BITRATE(2867));
+    data_len = opus_encode(enc, pcm2, 960, data, 1000);
+    assert(data_len > 0);
+
+    opus_encoder_destroy(enc);
+    return 0;
+}
+
 void regression_test(void)
 {
    fprintf(stderr, "Running simple tests for bugs that have been fixed previously\n");
@@ -992,4 +1031,5 @@ void regression_test(void)
    surround_analysis_uninit();
    ec_enc_shrink_assert();
    ec_enc_shrink_assert2();
+   silk_gain_assert();
 }

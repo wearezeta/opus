@@ -65,7 +65,7 @@ opus_uint32 celt_lcg_rand(opus_uint32 seed)
 
 /* This is a cos() approximation designed to be bit-exact on any platform. Bit exactness
    with this approximation is important because it has an impact on the bit allocation */
-static opus_int16 bitexact_cos(opus_int16 x)
+opus_int16 bitexact_cos(opus_int16 x)
 {
    opus_int32 tmp;
    opus_int16 x2;
@@ -77,7 +77,7 @@ static opus_int16 bitexact_cos(opus_int16 x)
    return 1+x2;
 }
 
-static int bitexact_log2tan(int isin,int icos)
+int bitexact_log2tan(int isin,int icos)
 {
    int lc;
    int ls;
@@ -92,10 +92,11 @@ static int bitexact_log2tan(int isin,int icos)
 
 #ifdef FIXED_POINT
 /* Compute the amplitude (sqrt energy) in each of the bands */
-void compute_band_energies(const CELTMode *m, const celt_sig *X, celt_ener *bandE, int end, int C, int LM)
+void compute_band_energies(const CELTMode *m, const celt_sig *X, celt_ener *bandE, int end, int C, int LM, int arch)
 {
    int i, c, N;
    const opus_int16 *eBands = m->eBands;
+   (void)arch;
    N = m->shortMdctSize<<LM;
    c=0; do {
       for (i=0;i<end;i++)
@@ -155,7 +156,7 @@ void normalise_bands(const CELTMode *m, const celt_sig * OPUS_RESTRICT freq, cel
 
 #else /* FIXED_POINT */
 /* Compute the amplitude (sqrt energy) in each of the bands */
-void compute_band_energies(const CELTMode *m, const celt_sig *X, celt_ener *bandE, int end, int C, int LM)
+void compute_band_energies(const CELTMode *m, const celt_sig *X, celt_ener *bandE, int end, int C, int LM, int arch)
 {
    int i, c, N;
    const opus_int16 *eBands = m->eBands;
@@ -164,7 +165,7 @@ void compute_band_energies(const CELTMode *m, const celt_sig *X, celt_ener *band
       for (i=0;i<end;i++)
       {
          opus_val32 sum;
-         sum = 1e-27f + celt_inner_prod_c(&X[c*N+(eBands[i]<<LM)], &X[c*N+(eBands[i]<<LM)], (eBands[i+1]-eBands[i])<<LM);
+         sum = 1e-27f + celt_inner_prod(&X[c*N+(eBands[i]<<LM)], &X[c*N+(eBands[i]<<LM)], (eBands[i+1]-eBands[i])<<LM, arch);
          bandE[i+c*m->nbEBands] = celt_sqrt(sum);
          /*printf ("%f ", bandE[i+c*m->nbEBands]);*/
       }
@@ -684,6 +685,7 @@ struct band_ctx {
    int arch;
    int theta_round;
    int disable_inv;
+   int avoid_split_noise;
 };
 
 struct split_ctx {
@@ -745,6 +747,20 @@ static void compute_theta(struct band_ctx *ctx, struct split_ctx *sctx,
          if (!stereo || ctx->theta_round == 0)
          {
             itheta = (itheta*(opus_int32)qn+8192)>>14;
+            if (!stereo && ctx->avoid_split_noise && itheta > 0 && itheta < qn)
+            {
+               /* Check if the selected value of theta will cause the bit allocation
+                  to inject noise on one side. If so, make sure the energy of that side
+                  is zero. */
+               int unquantized = celt_udiv((opus_int32)itheta*16384, qn);
+               imid = bitexact_cos((opus_int16)unquantized);
+               iside = bitexact_cos((opus_int16)(16384-unquantized));
+               delta = FRAC_MUL16((N-1)<<7,bitexact_log2tan(iside,imid));
+               if (delta > *b)
+                  itheta = qn;
+               else if (delta < -*b)
+                  itheta = 0;
+            }
          } else {
             int down;
             /* Bias quantization towards itheta=0 and itheta=16384. */
@@ -1452,6 +1468,8 @@ void quant_all_bands(int encode, const CELTMode *m, int start, int end,
    ctx.disable_inv = disable_inv;
    ctx.resynth = resynth;
    ctx.theta_round = 0;
+   /* Avoid injecting noise in the first band on transients. */
+   ctx.avoid_split_noise = B > 1;
    for (i=start;i<end;i++)
    {
       opus_int32 tell;
@@ -1640,6 +1658,9 @@ void quant_all_bands(int encode, const CELTMode *m, int start, int end,
 
       /* Update the folding position only as long as we have 1 bit/sample depth. */
       update_lowband = b>(N<<BITRES);
+      /* We only need to avoid noise on a split for the first band. After that, we
+         have folding. */
+      ctx.avoid_split_noise = 0;
    }
    *seed = ctx.seed;
 

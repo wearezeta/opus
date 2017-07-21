@@ -109,13 +109,13 @@ static OPUS_INLINE void silk_noise_shape_quantizer_del_dec(
     opus_int            predictLPCOrder,        /* I    Prediction filter order             */
     opus_int            warping_Q16,            /* I                                        */
     opus_int            nStatesDelayedDecision, /* I    Number of states in decision tree   */
-    opus_int            *smpl_buf_idx,          /* I    Index to newest samples in buffers  */
+    opus_int            *smpl_buf_idx,          /* I/O  Index to newest samples in buffers  */
     opus_int            decisionDelay,          /* I                                        */
     int                 arch                    /* I                                        */
 );
 
 void silk_NSQ_del_dec_c(
-    const silk_encoder_state    *psEncC,                                    /* I/O  Encoder State                   */
+    const silk_encoder_state    *psEncC,                                    /* I    Encoder State                   */
     silk_nsq_state              *NSQ,                                       /* I/O  NSQ state                       */
     SideInfoIndices             *psIndices,                                 /* I/O  Quantization Indices            */
     const opus_int16            x16[],                                        /* I    Input                           */
@@ -306,7 +306,6 @@ void silk_NSQ_del_dec_c(
     NSQ->lagPrev        = pitchL[ psEncC->nb_subfr - 1 ];
 
     /* Save quantized speech signal */
-    /* DEBUG_STORE_DATA( enc.pcm, &NSQ->xq[psEncC->ltp_mem_length], psEncC->frame_length * sizeof( opus_int16 ) ) */
     silk_memmove( NSQ->xq,           &NSQ->xq[           psEncC->frame_length ], psEncC->ltp_mem_length * sizeof( opus_int16 ) );
     silk_memmove( NSQ->sLTP_shp_Q14, &NSQ->sLTP_shp_Q14[ psEncC->frame_length ], psEncC->ltp_mem_length * sizeof( opus_int32 ) );
     RESTORE_STACK;
@@ -341,7 +340,7 @@ static OPUS_INLINE void silk_noise_shape_quantizer_del_dec(
     opus_int            predictLPCOrder,        /* I    Prediction filter order             */
     opus_int            warping_Q16,            /* I                                        */
     opus_int            nStatesDelayedDecision, /* I    Number of states in decision tree   */
-    opus_int            *smpl_buf_idx,          /* I    Index to newest samples in buffers  */
+    opus_int            *smpl_buf_idx,          /* I/O  Index to newest samples in buffers  */
     opus_int            decisionDelay,          /* I                                        */
     int                 arch                    /* I                                        */
 )
